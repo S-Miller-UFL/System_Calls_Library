@@ -1,0 +1,8 @@
+i started this project, after talking to a TA, by first looking for the kernels system call table
+i did this by using "grep -lr system_call"
+i chose this command because, since im looking for a system call table, looking for "system_call" seemed the most obvious place to start
+i was presented with a bunch of files, but one that stook out to me was "arch/x86/entry/entry_64_compat.S", this reason i chose
+this file specifically is because we were reminded in the project specs were working with an x86-64 architecture, so this made the most sense.
+
+after i cd'ed into the "entry" folder, i did "ls" to show me its documents, and i found "syscall_64.tbl".
+It couldnt be more obvious what the file that contained the system call table was at this point.
