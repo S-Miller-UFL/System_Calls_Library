@@ -1,8 +1,31 @@
 i started this project, after talking to a TA, by first looking for the kernels system call table
-i did this by using "grep -lr system_call"
+i did this by using "grep -lr system_call" in the kernel
 i chose this command because, since im looking for a system call table, looking for "system_call" seemed the most obvious place to start
-i was presented with a bunch of files, but one that stook out to me was "arch/x86/entry/entry_64_compat.S", this reason i chose
-this file specifically is because we were reminded in the project specs were working with an x86-64 architecture, so this made the most sense.
+i was presented with a bunch of folders, but one that stook out to me was "arch/x86/entry/entry_64_compat.S", this reason i chose
+this folder specifically is because we were reminded in the project specs were working with an x86-64 architecture, so this made the most sense.
 
 after i cd'ed into the "entry" folder, i did "ls" to show me its documents, and i found "syscall_64.tbl".
 It couldnt be more obvious what the file that contained the system call table was at this point.
+
+tests to do in fresh kernel:
+1.start fresh kernel(PASS)
+2.run heartbeat file, this will apply p1 and unzip tar(PASS)
+3.run make && sudo make install && sudo make modules_install(PASS)
+3.run test files(PASS)
+
+sed -i -e 's/\r$//' heartbeat-p1.sh
+
+1. is my man file good?
+2. i understand youve told me multiple times my patch file is fine, but 
+how are you confident it will pass? its not passing on my computer?
+also, ive noticed other people have the same problem as i do, has there
+been a solution?
+
+youll be given a binary for next week and thatll test it for you
+the way the binary works is that itll grade your project, and the grade will be encrypted
+the way binary catches the messages is different but
+
+if its seen that your score is obviously wrong,  a ta will run the grade on their computer.
+3.can i share the testing file i made with others?
+
+mention harness functions

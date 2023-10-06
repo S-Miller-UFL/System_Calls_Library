@@ -389,9 +389,9 @@
 546	x32	preadv2			__x32_compat_sys_preadv64v2
 547	x32	pwritev2		__x32_compat_sys_pwritev64v2
 #
-#modified by steven miller on 9/13/2023
+#modified by steven miller on 9/14/2023
 #Description: custom syscall numbers for project 1
 #
 548	common	proc_log_write		__x64_sys_proc_log_write
-549	common	proc_log_read		__x64_sys_proc_log_read
-550 	common	kernel_log_getlevel	__x64_sys_kernel_log_getlevel
+549	common	kernel_log_setlevel	__x64_sys_kernel_log_setlevel
+550 common	kernel_log_getlevel	__x64_sys_kernel_log_getlevel

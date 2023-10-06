@@ -1,0 +1,158 @@
+.TH Project 1
+.SH Name
+Project 1: System Calls
+.SH Synopsis
+editing the kernel to add my own systems calls that allow any process to log a message
+.SH Description
+
+The system call table was found in:
+.TP 
+\fB/usr/rep/src/reptilian-kernel/arch/x86/entry/syscall_64.tbl\fR
+.br
+
+After I found the system call table, I added my entries to point the kernel towards my system calls.
+This was done with the help of an online guide linked in the project description page (see reference 1).
+.TP
+The prototypes are in:
+.TP
+.br
+.TP
+\fB /usr/rep/src/reptilian-kernel/include/linux/syscalls.h
+.br
+I added my system call prototypes here to write the actual definitions.
+.TP
+The definitions for the system calls are in:
+.TP
+\fB/usr/rep/src/reptilian-kernel/kernel/sys.c
+
+I added my system call declarations here so they can be executed.
+.TP
+
+Three system calls were implemented:
+.br
+.TP
+1. proc_log_write
+This system call is responsible for actually printing out the message. Printing is achieved by using \fBprintk\fR.
+Which is the logging function in linux.
+
+It also needs to print the executable and pid of the process requesting to log a message, this was done by declaring
+a \fB task_struct current->comm \fR and \fB task_struct current -> pid \fR pointer since a task struct contains the executable name and PID. This was found using stack overflow (see reference 6, 7, 8, and 9).
+
+I copied the message from user space to kernel space using \fBcopy_from_user\fR, this function helps to avoid a kernel panic. It was found in the discussion slides (see reference 10).
+
+.TP
+2. kernel_log_setlevel
+This system call allows a process to set the kernel wide log level.
+
+This was implemented by first checking if the current process was running under
+\fBsudo\fR by using function \fBcurrent_uid().val\fR, which was recommended by Ernesto A Mujica.
+
+.TP
+3. kernel_log_getlevel
+This retrieves the kernel wide log level.
+
+If it cant, it returns \fB -1\fR.
+.TP
+
+After implementing the system calls, i implemented the following library functions to access them:
+
+.TP
+int get_proc_log_level()
+This function calls the "kernel_log_getlevel" syscall.
+.TP
+int set_proc_log_level(int)
+This function calls the "kernel_log_setlevel" syscall.
+.TP
+int proc_log_message(int, char*)
+This function calls the "proc_log_write" syscall.
+
+.TP
+int* retrieve_set_level_params(int)
+This function returns an int array that allows you to make the set_level syscall.
+.TP
+int* retrieve_get_level_params();
+This function returns an int array that allows you to make the get_level syscall.
+.TP
+int interpret_set_level_result(int);
+This function returns the set_proc_log_level interpretation of kernel_log_setlevel's return value
+.TP
+int interpret_get_level_result(int);
+This function returns the get_proc_log_level interpretation of kernel_log_getlevel's return value
+.TP
+int interpret_log_message_result(int);
+This function returns the proc_log_message interpretation of proc_log_write's return value
+.TP
+After testing was completed, I turned my changes into a patch file, 
+then compressed the library file using command 2 in the commands section.
+
+.TP
+\fB Commands \fR
+
+.br
+
+1. \fBgrep -lr system_call"\fR
+    This command searches inside files for matching phrases, system_call in this case.
+    The option "lr" tells the command to list out files with matching phrases(l), search recursively(r).
+    This command was found on geeksforgeeks
+
+2. \fBtar -zcvf process_log.tar.gz process_log \fR.
+    This command tarballs a folder and pipes it through gzip.
+    The option "zcvf" tells tar to gzip the tar file(z), compress the folder(c),
+    be verbose about the progress(v),specify a file to compress(f).
+    This command was found in exercise 1 documentation.
+
+.SH TESTING
+The system calls were tested by running the harness and library tests given to us.
+I applied the p1.diff patch to a fresh kernel, linked the library, then ran the tests.
+.SH BUGS
+No bugs I am aware of
+.SH LINK
+.br
+https://youtu.be/rxMRuA81q5I
+
+.SH REFERENCES/CITATIONS
+.br
+1.https://williamthegrey.wordpress.com/2014/05/18/add-your-own-system-calls-to-the-linux-kernel/
+
+.br
+2.https://academy.nordicsemi.com/courses/nrf-connect-sdk-fundamentals/lessons/lesson-3-printing-messages-to-console-and-logging/topic/printk-function/
+
+.br
+3.https://stackoverflow.com/questions/38492059/why-doesnt-the-function-printk-use-a-comma-to-separate-parameters
+
+.br
+4.https://elinux.org/Debugging_by_printing
+
+.br
+5.https://www.kernel.org/doc/html/next/core-api/printk-formats.html#printk-specifiers
+
+.br
+6.https://www.gnu.org/software/libc/manual/html_node/Process-Identification.html#:~:text=In%20the%20GNU%20C%20Library,as%20the%20parent%20process%20ID).
+
+.br
+7.https://stackoverflow.com/questions/56531880/how-does-the-kernel-use-task-struct
+
+.br
+8.https://stackoverflow.com/questions/5406942/linux-get-process-name-from-pid-within-kernel
+
+.br
+9.https://docs.huihoo.com/doxygen/linux/kernel/3.7/structtask__struct.html#a59d00a3d4123d24c34c7d6a461b26a48
+
+.br
+10.https://www.cs.bham.ac.uk/~exr/lectures/opsys/12_13/docs/kernelAPI/r4081.html
+
+\fBOther references:\fR
+.br
+https://www.geeksforgeeks.org/grep-command-in-unixlinux/#
+
+.br
+https://github.com/git-guides/git-add
+
+.br
+https://stackoverflow.com/questions/1800783/how-to-compare-a-local-git-branch-with-its-remote-branch
+
+.br
+https://stackoverflow.com/questions/5905054/how-can-i-recursively-find-all-files-in-current-and-subfolders-based-on-wildcard
+
+.SH Author
+Steven Miller

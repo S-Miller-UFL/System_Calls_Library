@@ -1,0 +1,250 @@
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index bbfc6d440870..10a919332003 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -388,3 +388,10 @@
+ 545	x32	execveat		__x32_compat_sys_execveat/ptregs
+ 546	x32	preadv2			__x32_compat_sys_preadv64v2
+ 547	x32	pwritev2		__x32_compat_sys_pwritev64v2
++#
++#modified by steven miller on 9/14/2023
++#Description: custom syscall numbers for project 1
++#
++548	common	proc_log_write		__x64_sys_proc_log_write
++549	common	kernel_log_setlevel	__x64_sys_kernel_log_setlevel
++550 common	kernel_log_getlevel	__x64_sys_kernel_log_getlevel
+\ No newline at end of file
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 8e5b2c6d5dea..b9dd0a069efb 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1121,6 +1121,18 @@ asmlinkage long sys_old_mmap(struct mmap_arg_struct __user *arg);
+  */
+ asmlinkage long sys_ni_syscall(void);
+ 
++//JUMP HERE 
++
++/*
++* Added by Steven Miller, september 14, 2023
++* Description: function prototypes for project 1 system calls
++*/
++//proc_log_write syscall
++asmlinkage int __x64_sys_proc_log_write( char* message_userspace, int level);
++//kernel_log_setlevel syscall
++asmlinkage int __x64_sys_kernel_log_setlevel(int level);
++//kernel_log_getlevel syscall
++asmlinkage int __x64_sys_kernel_log_getlevel();
+ #endif /* CONFIG_ARCH_HAS_SYSCALL_WRAPPER */
+ 
+ 
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 0a1cdee858de..cdc82fbc1d27 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2742,6 +2742,206 @@ SYSCALL_DEFINE1(sysinfo, struct sysinfo __user *, info)
+ 	return 0;
+ }
+ 
++/*
++* Added by Steven Miller, september 14, 2023
++* Description: function definitions for project 1 system calls
++*/
++
++//JUMP HERE
++
++int kernel_log_level = 0;
++
++//proc_log_write system call
++//compare int level to global level
++//if level is lower, print message and return level
++//if not, return negative one
++//1 caveat: you need to safely copy the pointer youre passing in
++//depending on the architecture of your computer, this may crash it
++//you need to use "copy from user" function
++//2 caveat: your library function works but your harness doesnt
++//if this is the case, you need to switch around the paramters
++//in the system call
++//the harness functions expect the order of message then level
++SYSCALL_DEFINE2(proc_log_write, char*, message_userspace, int, level)
++{
++	char* message_kernelspace = kmalloc(129,GFP_KERNEL);
++	int badbytes = 0;
++	bool size = false;
++	//get executable name
++	struct task_struct* currentprocess = current;
++	char* currentprocess_name = current->comm;
++	//get pid
++	pid_t currentprocess_pid = current -> pid;
++
++	//check if level is valid
++	if (level >= 0 && level <= 7) 
++	{
++		//check level
++		if (level <= kernel_log_level) 
++		{
++			//copy 128 bytes from user space
++			badbytes = copy_from_user(message_kernelspace, message_userspace,129);
++			if(badbytes > 0)
++			{
++				return -1;
++			}
++			else
++			{
++				//find null terminator
++				int i;
++				for (i = 0; i < 129; i++) 
++				{
++					if (message_kernelspace[i] == '\0') 
++					{
++						//the message is the correct size
++						size = true;
++						break;
++					}
++				}
++				//if message size is fine
++				if (size == true) {
++					//kernel emergency
++					if (level == 0) 
++					{
++						printk(KERN_EMERG
++						       "PROC_OVERRIDE [%s, %d]: %s",
++						       currentprocess_name,
++						       currentprocess_pid,
++						       message_kernelspace);
++						return level;
++					}
++					//kernel alert
++					else if (level == 1) 
++					{
++						printk(KERN_ALERT
++						       "PROC_ALERT [%s, %d]: %s",
++						       currentprocess_name,
++						       currentprocess_pid,
++						       message_kernelspace);
++						return level;
++					}
++					//kernel critical
++					else if (level == 2) 
++					{
++						printk(KERN_CRIT
++						       "PROC_CRITICAL [%s, %d]: %s",
++						       currentprocess_name,
++						       currentprocess_pid,
++						       message_kernelspace);
++						return level;
++					}
++					//kernel error
++					else if (level == 3) 
++					{
++						printk(KERN_ERR
++						       "PROC_ERROR [%s, %d]: %s",
++						       currentprocess_name,
++						       currentprocess_pid,
++						       message_kernelspace);
++						return level;
++					}
++					//kernel warning
++					else if (level == 4) 
++					{
++						printk(KERN_WARNING
++						       "PROC_WARNING [%s, %d]: %s",
++						       currentprocess_name,
++						       currentprocess_pid,
++						       message_kernelspace);
++						return level;
++					}
++					//kernel notice
++					else if (level == 5)
++					{
++						printk(KERN_NOTICE
++						       "PROC_NOTICE [%s, %d]: %s",
++						       currentprocess_name,
++						       currentprocess_pid,
++						       message_kernelspace);
++						return level;
++					}
++					//kernel info
++					else if (level == 6)
++					{
++						printk(KERN_INFO
++						       "PROC_INFO [%s, %d]: %s",
++						       currentprocess_name,
++						       currentprocess_pid,
++						       message_kernelspace);
++						return level;
++					}
++					//kernel debug
++					else if (level == 7)
++					{
++						printk(KERN_DEBUG
++						       "PROC_DEBUG [%s, %d]: %s",
++						       currentprocess_name,
++						       currentprocess_pid,
++						       message_kernelspace);
++						return level;
++					}
++				}
++				//if message is too big
++				else 
++				{
++					return -3;
++				}
++			}
++			
++		}
++		//if not lower
++		else 
++		{
++			return level;
++		}
++	} 
++	else
++	{
++		return -2;
++	}
++}
++//kernel_log_setlevel system call
++//set log level
++//check whether user is authorized(super user)
++//if id =0, user is okay. return new level
++//if id != 0. return negative 1
++SYSCALL_DEFINE1(kernel_log_setlevel, int,level)
++{
++	//check if user is authorized
++	uid_t user_type =  current_uid().val;
++	//user is okay
++	if(user_type == 0)
++	{
++		if(level >= 0 && level <=7)
++		{
++			kernel_log_level = level;
++			return kernel_log_level;
++		}
++		else //invalid log level
++		{
++			return -1;
++		}
++	}
++	//user isnt allowed to do this
++	else
++	{
++		return -2;
++	}
++	
++}
++//kernel_log_getlevel system call
++//return current log level
++SYSCALL_DEFINE0(kernel_log_getlevel)
++{
++	if(kernel_log_level >= 0 && kernel_log_level <=7)
++	{
++		return kernel_log_level;
++	}
++	else //something happened
++	{
++		return -1;
++	}
++}
+ #ifdef CONFIG_COMPAT
+ struct compat_sysinfo {
+ 	s32 uptime;

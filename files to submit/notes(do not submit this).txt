@@ -1,0 +1,6 @@
+1.remove swear words
+2.remove references, put them here if need be
+3.make sure you applied the patch, built, and linked the library
+in clean reptilian before actually submitting.
+
+dont fuck this up okay?
